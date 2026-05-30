@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalle Pokémon</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, 'Segoe UI', sans-serif; }
+        body { background: linear-gradient(145deg, #e9eef5, #dfe6ed); padding: 2rem 1.5rem; min-height: 100vh; }
+        .container { max-width: 1000px; margin: 0 auto; }
+        .back-btn {
+            background: #2d3748;
+            border: none;
+            padding: 0.6rem 1.4rem;
+            border-radius: 40px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            margin-bottom: 2rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .detail-card {
+            background: white;
+            border-radius: 2.5rem;
+            overflow: hidden;
+            box-shadow: 0 25px 40px -15px rgba(0,0,0,0.25);
+        }
+        .hero {
+            background: linear-gradient(120deg, #ffe6d5, #ffc3a0);
+            padding: 2rem;
+            text-align: center;
+        }
+        .hero img {
+            width: 220px;
+            height: 220px;
+            filter: drop-shadow(0 8px 18px rgba(0,0,0,0.2));
+        }
+        .hero h2 {
+            font-size: 2.5rem;
+            text-transform: capitalize;
+            margin-top: 0.5rem;
+            color: #2d3748;
+        }
+        .types {
+            display: flex;
+            gap: 0.8rem;
+            justify-content: center;
+            margin: 1rem 0;
+        }
+        .type-badge {
+            background: rgba(255,255,240,0.9);
+            padding: 0.3rem 1rem;
+            border-radius: 40px;
+            font-weight: 700;
+            text-transform: capitalize;
+        }
+        .info-section {
+            padding: 1.8rem;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px,1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .stat-card {
+            background: #f8fafc;
+            border-radius: 1.2rem;
+            padding: 1rem;
+            text-align: center;
+        }
+        .stat-name {
+            font-weight: 600;
+            color: #475569;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+        }
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: #f97316;
+        }
+        .abilities {
+            background: #f1f5f9;
+            border-radius: 1.5rem;
+            padding: 1.2rem;
+        }
+        .abilities h3 {
+            margin-bottom: 0.8rem;
+        }
+        .ability-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.6rem;
+        }
+        .ability-item {
+            background: white;
+            border-radius: 60px;
+            padding: 0.4rem 1.2rem;
+            font-weight: 500;
+            text-transform: capitalize;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+        .loading, .error {
+            text-align: center;
+            background: white;
+            border-radius: 2rem;
+            padding: 3rem;
+        }
+        .spinner {
+            border: 6px solid #e2e8f0;
+            border-top: 6px solid #f97316;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        footer { text-align: center; margin-top: 2rem; color: #4b5563; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <button class="back-btn" id="backBtn">← Regresar</button>
+    <div id="detailContent">
+        <div class="loading"><div class="spinner"></div><p>Cargando datos del Pokémon...</p></div>
+    </div>
+    <footer>⚡ Datos oficiales de PokéAPI ⚡</footer>
+</div>
+
+<script>
+    const params = new URLSearchParams(window.location.search);
+    const pokemonName = params.get('name');
+    if (!pokemonName) window.location.href = 'tipos.html';
+
+    const container = document.getElementById('detailContent');
+
+    async function loadPokemonDetail() {
+        try {
+            const res = await fetch(`https://pokeapi.co/api/v2/pokemon/${pokemonName.toLowerCase()}`);
+            if (!res.ok) throw new Error('Pokémon no encontrado');
+            const p = await res.json();
+            const sprite = p.sprites.other?.['official-artwork']?.front_default || p.sprites.front_default || `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${p.id}.png`;
+            const types = p.types.map(t => t.type.name);
+            const abilities = p.abilities.map(a => a.ability.name);
+            const stats = p.stats.map(s => ({ name: s.stat.name, value: s.base_stat }));
+            
+            const html = `
+                <div class="detail-card">
+                    <div class="hero">
+                        <img src="${sprite}" alt="${p.name}" onerror="this.src='https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${p.id}.png'">
+                        <h2>${p.name}</h2>
+                        <div class="types">
+                            ${types.map(t => `<span class="type-badge">${t}</span>`).join('')}
+                        </div>
+                        <span style="background:rgba(0,0,0,0.2); padding:0.2rem 1rem; border-radius:30px;">N.º ${String(p.id).padStart(3,'0')}</span>
+                    </div>
+                    <div class="info-section">
+                        <div class="stats-grid">
+                            <h3 style="grid-column:1/-1;">📊 Estadísticas base</h3>
+                            ${stats.map(stat => `
+                                <div class="stat-card">
+                                    <div class="stat-name">${stat.name.replace('-',' ')}</div>
+                                    <div class="stat-value">${stat.value}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <div class="abilities">
+                            <h3>🌀 Habilidades</h3>
+                            <div class="ability-list">
+                                ${abilities.map(ab => `<span class="ability-item">${ab}</span>`).join('')}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            container.innerHTML = html;
+        } catch (err) {
+            container.innerHTML = `<div class="error">❌ Error: ${err.message}<br><button class="back-btn" style="margin-top:1rem;" onclick="window.location.href='tipos.html'">Ir a inicio</button></div>`;
+        }
+    }
+    document.getElementById('backBtn').addEventListener('click', () => {
+        // Intentar volver a la lista del tipo anterior (si se guardó en sessionStorage)
+        const prevType = sessionStorage.getItem('lastSelectedType');
+        if (prevType) window.location.href = `lista.html?type=${encodeURIComponent(prevType)}`;
+        else window.location.href = 'tipos.html';
+    });
+    // Guardar el tipo actual si venimos de lista.html (al hacer clic desde allí, podemos pasar el tipo por URL o sessionStorage)
+    // Para mejorar la experiencia, recuperamos el tipo referer desde document.referrer? opcional
+    // De forma sencilla: si la página anterior es lista.html, el tipo puede ir en sessionStorage.
+    // Simplemente comprobamos si existe un tipo en localStorage/sessionStorage, pero si no, el botón "Regresar" va a tipos.
+    // Para que funcione perfecto, en lista.html antes de redirigir a detalle guardamos el tipo actual:
+    // Pero ya que no modificamos lista.html, podemos leer el referer y extraer el tipo si contiene 'lista.html?type=...'
+    const referrer = document.referrer;
+    if (referrer.includes('lista.html') && referrer.includes('type=')) {
+        const match = referrer.match(/type=([^&]+)/);
+        if (match) sessionStorage.setItem('lastSelectedType', decodeURIComponent(match[1]));
+    }
+    loadPokemonDetail();
+</script>
+</body>
+</html>
