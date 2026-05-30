@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>PokeTypes - Explorador de Pokémon</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: system-ui, 'Segoe UI', 'Poppins', 'Roboto', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(145deg, #f5f7fc 0%, #eef2f8 100%);
+            min-height: 100vh;
+            padding: 2rem 1.5rem;
+        }
+
+        /* Contenedor principal */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Encabezado */
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .header h1 {
+            font-size: 2.8rem;
+            background: linear-gradient(135deg, #ff6b6b, #f9ca24, #6c5ce7);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            letter-spacing: -0.5px;
+            text-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .header p {
+            color: #4a5568;
+            font-weight: 500;
+            margin-top: 0.5rem;
+        }
+
+        /* Grid de cards */
+        .grid-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 2rem;
+            justify-items: center;
+            align-items: stretch;
+        }
+
+        /* Estilo de card moderna */
+        .card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(2px);
+            border-radius: 2rem;
+            overflow: hidden;
+            box-shadow: 0 20px 30px -12px rgba(0, 0, 0, 0.15);
+            transition: transform 0.25s ease, box-shadow 0.3s ease;
+            width: 100%;
+            cursor: pointer;
+            border: 1px solid rgba(255,255,240,0.6);
+        }
+
+        .card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 28px 36px -14px rgba(0, 0, 0, 0.25);
+        }
+
+        /* Imagen o ícono dentro de card */
+        .card-img {
+            background: radial-gradient(circle at 30% 20%, rgba(255,255,245,0.8), rgba(230,240,255,0.9));
+            padding: 1.5rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 180px;
+        }
+
+        .card-img img {
+            width: 130px;
+            height: 130px;
+            object-fit: contain;
+            filter: drop-shadow(0 6px 12px rgba(0,0,0,0.2));
+            transition: transform 0.2s;
+        }
+
+        .card:hover .card-img img {
+            transform: scale(1.03);
+        }
+
+        .card-content {
+            padding: 1.5rem 1.2rem 1.8rem;
+            text-align: center;
+            background: white;
+        }
+
+        .card-content h3 {
+            font-size: 1.6rem;
+            font-weight: 700;
+            text-transform: capitalize;
+            color: #1e293b;
+            letter-spacing: -0.3px;
+            margin-bottom: 0.4rem;
+        }
+
+        .badge-type {
+            display: inline-block;
+            background: #e2e8f0;
+            border-radius: 40px;
+            padding: 0.3rem 1rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #2d3748;
+            margin-top: 0.5rem;
+        }
+
+        /* Botones y navegación */
+        .back-button {
+            background: #2d3748;
+            border: none;
+            padding: 0.7rem 1.6rem;
+            border-radius: 60px;
+            font-weight: 600;
+            font-size: 1rem;
+            color: white;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.6rem;
+            transition: 0.2s;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .back-button:hover {
+            background: #1e293b;
+            transform: translateX(-3px);
+        }
+
+        .loading-spinner {
+            text-align: center;
+            padding: 3rem;
+            font-size: 1.2rem;
+            color: #4b5563;
+        }
+
+        .spinner {
+            border: 5px solid #e2e8f0;
+            border-top: 5px solid #f97316;
+            border-radius: 50%;
+            width: 55px;
+            height: 55px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            background: #fee2e2;
+            color: #b91c1c;
+            padding: 1rem;
+            border-radius: 1rem;
+            text-align: center;
+            font-weight: 500;
+            margin: 2rem;
+        }
+
+        /* detalles pokemon */
+        .detail-wrapper {
+            background: white;
+            border-radius: 2.5rem;
+            overflow: hidden;
+            box-shadow: 0 25px 40px -15px rgba(0,0,0,0.2);
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .detail-header {
+            background: linear-gradient(120deg, #ffecd2 0%, #fcb69f 100%);
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .detail-header img {
+            width: 220px;
+            height: 220px;
+            filter: drop-shadow(0 8px 18px rgba(0,0,0,0.2));
+        }
+
+        .detail-name {
+            font-size: 2.5rem;
+            font-weight: 800;
+            text-transform: capitalize;
+            color: #2d3748;
+        }
+
+        .detail-types {
+            display: flex;
+            gap: 0.8rem;
+            justify-content: center;
+            margin: 1rem 0;
+        }
+
+        .type-pill {
+            background: #ffffffcc;
+            backdrop-filter: blur(4px);
+            padding: 0.4rem 1.2rem;
+            border-radius: 40px;
+            font-weight: 700;
+            text-transform: capitalize;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(210px,1fr));
+            gap: 1rem;
+            padding: 1.8rem;
+        }
+
+        .stat-card {
+            background: #f8fafc;
+            border-radius: 1.2rem;
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .stat-name {
+            font-weight: 700;
+            color: #475569;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: #f97316;
+        }
+
+        .abilities {
+            padding: 1rem 1.8rem 2rem;
+        }
+
+        .abilities h3, .stats-grid h3 {
+            margin-bottom: 0.8rem;
+            color: #1e293b;
+        }
+
+        .ability-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.8rem;
+        }
+
+        .ability-item {
+            background: #e9eef3;
+            border-radius: 60px;
+            padding: 0.4rem 1.2rem;
+            font-weight: 500;
+            text-transform: capitalize;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 3rem;
+            color: #6c757d;
+            font-size: 0.8rem;
+        }
+
+        @media (max-width: 640px) {
+            body {
+                padding: 1rem;
+            }
+            .card-content h3 {
+                font-size: 1.3rem;
+            }
+            .detail-name {
+                font-size: 1.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="appRoot">
+        <!-- El contenido se renderizará dinámicamente según la página que corresponda -->
+    </div>
+    <footer>✨ Datos proporcionados por PokéAPI | Explora todos los tipos y Pokémon ✨</footer>
+
+    <script>
+        // ---------- UTILIDADES ----------
+        const POKEAPI_BASE = 'https://pokeapi.co/api/v2';
+
+        // Obtener parámetro de la URL
+        function getQueryParam(param) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(param);
+        }
+
+        // Obtener ID desde la URL de pokemon (ej: "https://pokeapi.co/api/v2/pokemon/25/")
+        function getIdFromUrl(url) {
+            const parts = url.split('/').filter(p => p);
+            return parts[parts.length - 1];
+        }
+
+        // Construir sprite oficial de Pokémon por ID
+        function getPokemonSprite(id) {
+            return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${id}.png`;
+            // fallback: también existe front_default pero el artwork se ve genial
+        }
+
+        // Mostrar loading en contenedor
+        function showLoading(container) {
+            container.innerHTML = `
+                <div class="loading-spinner">
+                    <div class="spinner"></div>
+                    <p>Cargando universo Pokémon...</p>
+                </div>
+            `;
+        }
+
+        function showError(container, message) {
+            container.innerHTML = `<div class="error-message">⚠️ ${message} ⚠️</div>`;
+        }
+
+        // -------- PÁGINA 1: LISTA DE TIPOS DE POKEMON (cards con categorías) --------
+        async function renderTypesPage() {
+            const root = document.getElementById('appRoot');
+            showLoading(root);
+            try {
+                const response = await fetch(`${POKEAPI_BASE}/type?limit=100`);
+                if (!response.ok) throw new Error('Error al cargar tipos');
+                const data = await response.json();
+                // Filtrar tipos no deseados: 'unknown' y 'shadow' no son útiles para la exploración
+                let types = data.results.filter(t => t.name !== 'unknown' && t.name !== 'shadow');
+                // Ordenar alfabéticamente
+                types.sort((a,b) => a.name.localeCompare(b.name));
+                
+                // Construir HTML
+                let html = `
+                    <div class="header">
+                        <h1>⚡ Categorías Pokémon ⚡</h1>
+                        <p>Selecciona un tipo para descubrir sus Pokémon</p>
+                    </div>
+                    <div class="grid-cards" id="typesGrid"></div>
+                `;
+                root.innerHTML = html;
+                const grid = document.getElementById('typesGrid');
+                
+                // Por cada tipo, crear card. Necesitamos un ícono representativo (emojis o imagen)
+                for (const type of types) {
+                    const typeName = type.name;
+                    // Emojis o íconos temáticos según tipo
+                    let iconEmoji = '🔮';
+                    const typeIconMap = {
+                        normal: '📦', fire: '🔥', water: '💧', electric: '⚡', grass: '🌿', ice: '❄️',
+                        fighting: '🥋', poison: '☠️', ground: '⛰️', flying: '🕊️', psychic: '🔮',
+                        bug: '🐛', rock: '🪨', ghost: '👻', dragon: '🐉', dark: '🌑', steel: '⚙️',
+                        fairy: '✨'
+                    };
+                    if (typeIconMap[typeName]) iconEmoji = typeIconMap[typeName];
+                    
+                    const cardDiv = document.createElement('div');
+                    cardDiv.className = 'card';
+                    cardDiv.innerHTML = `
+                        <div class="card-img" style="background: radial-gradient(circle at 30% 20%, rgba(255,240,200,0.9), rgba(255,220,180,0.6));">
+                            <div style="font-size: 5rem;">${iconEmoji}</div>
+                        </div>
+                        <div class="card-content">
+                            <h3>${typeName.toUpperCase()}</h3>
+                            <span class="badge-type">${typeName} type</span>
+                        </div>
+                    `;
+                    cardDiv.addEventListener('click', () => {
+                        window.location.href = `?page=list&type=${encodeURIComponent(typeName)}`;
+                    });
+                    grid.appendChild(cardDiv);
+                }
+            } catch (err) {
+                showError(root, 'No se pudo cargar la lista de tipos. Verifica tu conexión.');
+                console.error(err);
+            }
+        }
+
+        // -------- PÁGINA 2: POKEMON DE UN TIPO ESPECÍFICO (cards) --------
+        async function renderPokemonListByType() {
+            const typeName = getQueryParam('type');
+            if (!typeName) {
+                // Si no hay tipo, redirigir a inicio
+                window.location.href = '?page=types';
+                return;
+            }
+            const root = document.getElementById('appRoot');
+            showLoading(root);
+            try {
+                const response = await fetch(`${POKEAPI_BASE}/type/${typeName.toLowerCase()}`);
+                if (!response.ok) throw new Error('Tipo no encontrado');
+                const data = await response.json();
+                const pokemonEntries = data.pokemon; // array de {pokemon: {name, url}}
+                if (!pokemonEntries.length) throw new Error('No hay Pokémon en este tipo');
+                
+                // Extraer información básica: nombre + id desde url
+                const pokemonList = pokemonEntries.map(entry => {
+                    const url = entry.pokemon.url;
+                    const id = getIdFromUrl(url);
+                    const name = entry.pokemon.name;
+                    return { id, name, url };
+                });
+                // Ordenar por ID
+                pokemonList.sort((a,b) => a.id - b.id);
+                
+                // Renderizar layout con botón de regreso
+                let html = `
+                    <button class="back-button" id="backToTypesBtn">← Volver a Tipos</button>
+                    <div class="header">
+                        <h1>✨ Pokémon de tipo: <span style="text-transform:capitalize; background: #ffd966; padding:0 10px;border-radius:40px;">${typeName}</span></h1>
+                        <p>Haz clic en cualquier Pokémon para ver sus características</p>
+                    </div>
+                    <div class="grid-cards" id="pokemonGrid"></div>
+                `;
+                root.innerHTML = html;
+                document.getElementById('backToTypesBtn').addEventListener('click', () => {
+                    window.location.href = '?page=types';
+                });
+                
+                const grid = document.getElementById('pokemonGrid');
+                // Por cada pokemon crear card con sprite
+                for (const p of pokemonList) {
+                    const spriteUrl = getPokemonSprite(p.id);
+                    const card = document.createElement('div');
+                    card.className = 'card';
+                    card.innerHTML = `
+                        <div class="card-img">
+                            <img src="${spriteUrl}" alt="${p.name}" loading="lazy" onerror="this.src='https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${p.id}.png'">
+                        </div>
+                        <div class="card-content">
+                            <h3>${p.name}</h3>
+                            <span class="badge-type">#${p.id.padStart? p.id.padStart(3,'0') : String(p.id).padStart(3,'0')}</span>
+                        </div>
+                    `;
+                    card.addEventListener('click', () => {
+                        window.location.href = `?page=detail&name=${encodeURIComponent(p.name)}`;
+                    });
+                    grid.appendChild(card);
+                }
+            } catch (err) {
+                showError(root, `Error cargando Pokémon del tipo ${typeName}. ${err.message}`);
+                // Botón de regreso aunque haya error
+                const backBtn = document.createElement('button');
+                backBtn.className = 'back-button';
+                backBtn.innerText = '← Volver a Tipos';
+                backBtn.style.margin = '1rem';
+                backBtn.onclick = () => window.location.href = '?page=types';
+                root.innerHTML = '';
+                root.appendChild(backBtn);
+                const errDiv = document.createElement('div');
+                errDiv.className = 'error-message';
+                errDiv.innerText = `No se pudieron obtener los Pokémon: ${err.message}`;
+                root.appendChild(errDiv);
+            }
+        }
+
+        // -------- PÁGINA 3: DETALLE DEL POKEMON SELECCIONADO --------
+        async function renderPokemonDetail() {
+            const pokemonName = getQueryParam('name');
+            if (!pokemonName) {
+                window.location.href = '?page=types';
+                return;
+            }
+            const root = document.getElementById('appRoot');
+            showLoading(root);
+            try {
+                const response = await fetch(`${POKEAPI_BASE}/pokemon/${pokemonName.toLowerCase()}`);
+                if (!response.ok) throw new Error('Pokémon no encontrado');
+                const pokemon = await response.json();
+                
+                // Extraer datos relevantes
+                const name = pokemon.name;
+                const id = pokemon.id;
+                const sprite = pokemon.sprites.other?.['official-artwork']?.front_default || pokemon.sprites.front_default || getPokemonSprite(id);
+                const types = pokemon.types.map(t => t.type.name);
+                const abilities = pokemon.abilities.map(a => a.ability.name);
+                const stats = pokemon.stats.map(s => ({ name: s.stat.name, value: s.base_stat }));
+                
+                // Construir layout detallado
+                let html = `
+                    <button class="back-button" id="backToListBtn">← Regresar a lista de tipo</button>
+                    <div class="detail-wrapper">
+                        <div class="detail-header">
+                            <img src="${sprite}" alt="${name}" onerror="this.src='https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${id}.png'">
+                            <h2 class="detail-name">${name}</h2>
+                            <div class="detail-types">
+                                ${types.map(t => `<span class="type-pill">${t}</span>`).join('')}
+                            </div>
+                            <span style="background:rgba(0,0,0,0.2); padding:0.2rem 1rem; border-radius:30px; font-weight:500;">N.º ${String(id).padStart(3,'0')}</span>
+                        </div>
+                        <div class="stats-grid">
+                            <h3 style="grid-column:1/-1;">⚡ Estadísticas base ⚡</h3>
+                            ${stats.map(stat => `
+                                <div class="stat-card">
+                                    <div class="stat-name">${stat.name.replace('-',' ')}</div>
+                                    <div class="stat-value">${stat.value}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <div class="abilities">
+                            <h3>🌀 Habilidades</h3>
+                            <div class="ability-list">
+                                ${abilities.map(ab => `<span class="ability-item">${ab}</span>`).join('')}
+                            </div>
+                        </div>
+                    </div>
+                `;
+                root.innerHTML = html;
+                // Botón para volver a la lista del tipo que originó la vista.
+                // Para recuperar el tipo, necesitamos saber qué tipo había seleccionado antes.
+                // Podemos guardarlo en sessionStorage o intentar obtener referer. Mejor guardar el último tipo al hacer click desde lista.
+                // Implementamos una solución robusta: al hacer clic en un pokemon desde la lista, antes de redirigir guardamos en sessionStorage el tipo activo.
+                // Si no existe, fallback: usar localStorage o simplemente ir a tipos.
+                const previousType = sessionStorage.getItem('lastSelectedType');
+                const backBtn = document.getElementById('backToListBtn');
+                backBtn.addEventListener('click', () => {
+                    if (previousType) {
+                        window.location.href = `?page=list&type=${encodeURIComponent(previousType)}`;
+                    } else {
+                        window.location.href = '?page=types';
+                    }
+                });
+            } catch (err) {
+                showError(root, `Error al cargar detalles de ${pokemonName}: ${err.message}`);
+                const backButton = document.createElement('button');
+                backButton.className = 'back-button';
+                backButton.innerText = '← Volver a inicio';
+                backButton.onclick = () => window.location.href = '?page=types';
+                root.innerHTML = '';
+                root.appendChild(backButton);
+            }
+        }
+
+        // ---------- ENRUTADOR PRINCIPAL basado en query parameter "page" ----------
+        // Para mantener la navegación sin múltiples archivos HTML, pero con páginas virtuales SPA-like.
+        // Aunque el enunciado pide "primer html", "segundo html" y "tercer html", podemos simularlo completamente con un solo HTML y cambios de vista.
+        // No obstante, para respetar la idea de "tres html distintos" se podría separar, pero el usuario pide "generar un html" donde utilicemos la api y se organicen cards.
+        // Para cumplir con tres vistas diferenciadas y robustez, usaremos un único archivo HTML con navegación por estados y mantenemos la coherencia.
+        // Así se ve como una aplicación de tres pantallas claras.
+        
+        // También almacenaremos el tipo actual seleccionado cuando se accede a lista para usarlo en detalle.
+        function initRouter() {
+            const page = getQueryParam('page');
+            // Si no hay page, mostramos la página de tipos (vista 1)
+            if (!page || page === 'types') {
+                renderTypesPage();
+            } 
+            else if (page === 'list') {
+                // Guardamos en sessionStorage el tipo que estamos viendo para que el detalle pueda regresar
+                const currentType = getQueryParam('type');
+                if (currentType) sessionStorage.setItem('lastSelectedType', currentType);
+                renderPokemonListByType();
+            }
+            else if (page === 'detail') {
+                renderPokemonDetail();
+            }
+            else {
+                // fallback
+                renderTypesPage();
+            }
+        }
+        
+        // Al cargar la página ejecutamos el router.
+        // Adicionalmente, si el usuario ingresa sin parámetros, asumimos vista tipos.
+        // Añadimos también evento popstate para la navegación con botones atrás/adelante del navegador.
+        window.addEventListener('load', () => {
+            initRouter();
+        });
+        window.addEventListener('popstate', () => {
+            initRouter();
+        });
+        
+        // Función adicional: si alguien accede directamente a la raíz, redirige a ?page=types de forma elegante
+        if (window.location.pathname === '/' || (window.location.search === '' && window.location.pathname.endsWith('index.html'))) {
+            // si no hay query, pero no queremos perder nada
+            if (!window.location.search.includes('page')) {
+                const newUrl = window.location.pathname + '?page=types';
+                window.history.replaceState(null, '', newUrl);
+                initRouter();
+            }
+        }
+    </script>
+</body>
+</html>
